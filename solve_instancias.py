@@ -48,22 +48,52 @@ def read_dat_file(file_path):
     # 6. Lendo a matriz de demanda (12 linhas, 12 colunas)
     demand_matrix = []
     demand_start_line = inventory_costs_line + 1
+
+    # Verifica se a matriz de demanda está na forma padrão
+    num_demand_lines = 0
+    for i in range(demand_start_line, len(lines)):
+        if lines[i].strip():  # Se a linha não estiver vazia, contamos como linha de demanda
+            num_demand_lines += 1
+        else:
+            break  # Interrompe se encontrar uma linha vazia (ou um bloco separado)
     
-    for i in range(periods):  # Lê a linha de demandas para o período
+    # Calcula o multiplicador, caso tenha mais linhas do que períodos
+    if num_demand_lines == periods * 2:
+        multiplier = 2  # A matriz de demanda tem o dobro de linhas
+        # raise Exception("FUCKED") 
+    else:
+        multiplier = 1  # A matriz de demanda tem o número esperado de linhas (T)
+    
+    # Leitura inicial das demandas
+    for i in range(periods * multiplier):  # Lê as linhas de demandas para os períodos
         demands = list(map(int, lines[demand_start_line + i].split()))
-        period_demand = []  # Divide as demandas entre as plantas
+        demand_matrix.append(demands)
+    
+    # Agora, se multiplier == 2, precisamos combinar as linhas 1-12 com 13-24 corretamente
+    if multiplier == 2:
+        new_demand_matrix = []
+        for i in range(periods):  # Para cada linha do primeiro bloco (1-12), combinar com (13-24)
+            combined_demand = demand_matrix[i] + demand_matrix[i + periods]  # Junta a linha i com i+12
+            new_demand_matrix.append(combined_demand)
+        demand_matrix = new_demand_matrix  # Substitui a matriz de demandas pela combinada
+    
+    # Agora vamos dividir os valores de cada linha combinada entre as plantas
+    final_demand_matrix = []
+    for demands in demand_matrix:
+        period_demand = []
         for j in range(num_plants):
-            # Extraindo demandas por planta (assumindo que cada planta tem um número igual de itens)
+            # Divide a demanda combinada por planta, assumindo que cada planta tem o mesmo número de itens
             plant_demand = demands[j*items:(j+1)*items]
             period_demand.append(plant_demand)
-
-        demand_matrix.append(period_demand)
-    demand_matrix = np.array(demand_matrix)
-    demand_matrix = np.transpose(demand_matrix, (2, 1, 0))
+        final_demand_matrix.append(period_demand)
+    
+    # Transpor a matriz de demanda para o formato correto (itens, plantas, períodos)
+    final_demand_matrix = np.array(final_demand_matrix)
+    final_demand_matrix = np.transpose(final_demand_matrix, (2, 1, 0))  # Converte para o formato (itens, plantas, períodos)
 
     # 7. Lendo os custos de transferência
     transfer_costs = []
-    transfer_cost_line = demand_start_line + periods
+    transfer_cost_line = demand_start_line + periods * multiplier
     while transfer_cost_line < len(lines):
         line = lines[transfer_cost_line].strip()  # Verificar se a linha não está vazia antes de tentar ler
         if line:
@@ -98,7 +128,7 @@ def read_dat_file(file_path):
             "setup_cost": setup_cost,  
             "production_cost": production_cost,
             "inventory_costs": inventory_costs,
-            "demand_matrix": demand_matrix,
+            "demand_matrix": final_demand_matrix,
             "transfer_costs": transfer_costs}
 
 
@@ -109,13 +139,28 @@ except IndexError:
     instancias_resolvidas = []
 
 folder_path = 'instancias/maria_desiree/'
-# Instâncias a serem resolvidas
-instancias = natsorted([f for f in os.listdir(folder_path) if f.endswith('.dat') and f.replace('.dat', '') not in instancias_resolvidas])
+# Lista de instâncias válidas (teste com AAA primeiro)
+arquivos = [
+    'AAA01226_0.dat', 'AAA01226_1.dat', 'AAA01226_2.dat', 'AAA01226_3.dat', 'AAA01226_4.dat',
+    'AAA012212_0.dat', 'AAA012212_1.dat', 'AAA012212_2.dat', 'AAA012212_3.dat', 'AAA012212_4.dat',
+    'AAA012225_0.dat', 'AAA012225_1.dat', 'AAA012225_2.dat', 'AAA012225_3.dat', 'AAA012225_4.dat',
+    'AAA012250_0.dat', 'AAA012250_1.dat', 'AAA012250_2.dat', 'AAA012250_3.dat', 'AAA012250_4.dat',
+    'AAA01246_0.dat', 'AAA01246_1.dat', 'AAA01246_2.dat', 'AAA01246_3.dat', 'AAA01246_4.dat',
+    'AAA012412_0.dat', 'AAA012412_1.dat', 'AAA012412_2.dat', 'AAA012412_3.dat', 'AAA012412_4.dat',
+    'AAA012425_0.dat', 'AAA012425_1.dat', 'AAA012425_2.dat', 'AAA012425_3.dat', 'AAA012425_4.dat',
+    'AAA012450_0.dat', 'AAA012450_1.dat', 'AAA012450_2.dat', 'AAA012450_3.dat', 'AAA012450_4.dat',
+    'AAA01266_0.dat', 'AAA01266_1.dat', 'AAA01266_2.dat', 'AAA01266_3.dat', 'AAA01266_4.dat',
+    'AAA012612_0.dat', 'AAA012612_1.dat', 'AAA012612_2.dat', 'AAA012612_3.dat', 'AAA012612_4.dat',
+    'AAA012625_0.dat', 'AAA012625_1.dat', 'AAA012625_2.dat', 'AAA012625_3.dat', 'AAA012625_4.dat',
+    'AAA012650_0.dat', 'AAA012650_1.dat', 'AAA012650_2.dat', 'AAA012650_3.dat', 'AAA012650_4.dat'
+]
+instancias = [a for a in arquivos if a.replace('.dat', '') not in instancias_resolvidas]
+# instancias = natsorted([f for f in os.listdir(folder_path)  if f.endswith('.dat') and f.startswith('AAA0') and f.replace('.dat', '') not in instancias_resolvidas])
 
 print(instancias)
 
 for file in instancias:
-    # Exemplo de uso
+    # Dados da instância
     data = read_dat_file(folder_path + file)
     
     # Modelo
@@ -181,7 +226,7 @@ for file in instancias:
     
     # Resolução
     # Critérios de parada
-    m.Params.timelimit = 3600  # Tempo (default = inf)
+    m.Params.timelimit = 1800  # Tempo (default = inf)
     # m.Params.MIPgap = 0.01  # Gap de otimalidade (default = 0.0001 = 0.01%)
     # Otimização
     m.optimize()
@@ -198,16 +243,16 @@ for file in instancias:
     status = m.Status
 
     # Verificação de status de resolução se resultado deve ser guardado:
-    # if status not in [11]:  # Não escreve caso seja interrompido pelo usuário 
+    if status not in [11]:  # Não escreve caso seja interrompido pelo usuário 
         # Escrever ou adicionar resultados no CSV
-    with open('results.csv', mode='a', newline='') as file:
-        writer = csv.writer(file)
+        with open('results.csv', mode='a', newline='') as file:
+            writer = csv.writer(file)
 
-        # Escrever o cabeçalho apenas na primeira vez
-        if file.tell() == 0:  # Se o arquivo estiver vazio, escrever o cabeçalho
-            writer.writerow(['Instância', 'Plantas', 'Produtos', 'Períodos', 
-                            'Lower Bound (LB)', 'Upper Bound (UB)', 'Gap', 
-                            'Tempo (s)', 'Status'])
+            # Escrever o cabeçalho apenas na primeira vez
+            if file.tell() == 0:  # Se o arquivo estiver vazio, escrever o cabeçalho
+                writer.writerow(['Instancia', 'Plantas', 'Produtos', 'Periodos', 
+                                'Lower Bound (LB)', 'Upper Bound (UB)', 'Gap', 
+                                'Tempo (s)', 'Status'])
 
-        # Adicionar os resultados da instância ao CSV
-        writer.writerow([inst, plantas, produtos, periodos, lb, ub, gap, time, status])
+            # Adicionar os resultados da instância ao CSV
+            writer.writerow([inst, plantas, produtos, periodos, lb, ub, gap, time, status])

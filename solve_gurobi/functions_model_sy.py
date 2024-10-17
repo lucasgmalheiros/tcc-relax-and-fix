@@ -5,8 +5,6 @@ import os
 from natsort import natsorted
 import csv
 
-
-# Leitura de instâncias
 def read_dat_file(file_path):
     """"Função para a leitura das instâncias de Mariá"""
     with open(file_path, 'r') as file:
@@ -60,7 +58,6 @@ def read_dat_file(file_path):
     # Calcula o multiplicador, caso tenha mais linhas do que períodos
     if num_demand_lines == periods * 2:
         multiplier = 2  # A matriz de demanda tem o dobro de linhas
-        # raise Exception("FUCKED") 
     else:
         multiplier = 1  # A matriz de demanda tem o número esperado de linhas (T)
     
@@ -68,15 +65,42 @@ def read_dat_file(file_path):
     for i in range(periods * multiplier):  # Lê as linhas de demandas para os períodos
         demands = list(map(int, lines[demand_start_line + i].split()))
         demand_matrix.append(demands)
+
+    # print('Linha 1:', demand_matrix[0])
+    # print('Linha 13:', demand_matrix[periods], '\n\n')
     
     # Agora, se multiplier == 2, precisamos combinar as linhas 1-12 com 13-24 corretamente
     if multiplier == 2:
         new_demand_matrix = []
-        for i in range(periods):  # Para cada linha do primeiro bloco (1-12), combinar com (13-24)
-            combined_demand = demand_matrix[i] + demand_matrix[i + periods]  # Junta a linha i com i+12
-            new_demand_matrix.append(combined_demand)
-        demand_matrix = new_demand_matrix  # Substitui a matriz de demandas pela combinada
+        
+        for i in range(periods):  # Para cada linha do primeiro bloco (1-12)
+            combined_period_demand = []  # Lista única para armazenar a demanda combinada para o período i
+            
+            # Quebrar a linha i entre as plantas
+            demands_first_part = demand_matrix[i]
+            demands_second_part = demand_matrix[i + periods]  # Linha correspondente do segundo bloco
+            
+            # Calcular o número de elementos por planta
+            elements_per_plant_first = len(demands_first_part) // num_plants
+            elements_per_plant_second = len(demands_second_part) // num_plants
+            
+            # Concatenar as demandas para cada planta
+            for j in range(num_plants):
+                # Particionar a demanda de cada planta
+                plant_demand_first = demands_first_part[j*elements_per_plant_first:(j+1)*elements_per_plant_first]
+                plant_demand_second = demands_second_part[j*elements_per_plant_second:(j+1)*elements_per_plant_second]
+                
+                # Concatenar as demandas da planta j (primeiro e segundo blocos) e adicionar diretamente à lista única
+                combined_period_demand.extend(plant_demand_first + plant_demand_second)
+            
+            # Adicionar a demanda ajustada (em formato de lista única) do período à nova matriz de demanda
+            new_demand_matrix.append(combined_period_demand)
+        
+        # Substitui a matriz de demandas pela combinada e particionada por planta
+        demand_matrix = new_demand_matrix
     
+    # print('Linha 1 output após junção:', demand_matrix[0])
+
     # Agora vamos dividir os valores de cada linha combinada entre as plantas
     final_demand_matrix = []
     for demands in demand_matrix:
@@ -89,6 +113,7 @@ def read_dat_file(file_path):
     
     # Transpor a matriz de demanda para o formato correto (itens, plantas, períodos)
     final_demand_matrix = np.array(final_demand_matrix)
+    # print(final_demand_matrix)
     final_demand_matrix = np.transpose(final_demand_matrix, (2, 1, 0))  # Converte para o formato (itens, plantas, períodos)
 
     # 7. Lendo os custos de transferência
@@ -132,40 +157,26 @@ def read_dat_file(file_path):
             "transfer_costs": transfer_costs}
 
 
-# Lê a primeira coluna do CSV de resultados para ver instâncias já resolvidas
-try:
-    instancias_resolvidas = [row[0] for row in csv.reader(open('results.csv'))][1:]  # Exclui o cabeçalho
-except IndexError:
-    instancias_resolvidas = []
+def lista_instancias(folder_path, results_file):
+    """Verifica instancias a serem resolvidas"""
+    # Lê a primeira coluna do CSV de resultados para ver instâncias já resolvidas
+    try:
+        instancias_resolvidas = [row[0] for row in csv.reader(open(results_file))][1:]  # Exclui o cabeçalho
+    except IndexError:
+        instancias_resolvidas = []
+    # Lista das instâncias na pasta que ainda não foram resolvidas
+    instancias = natsorted([f for f in os.listdir(folder_path) if f.endswith('.dat') and f.replace('.dat', '') not in instancias_resolvidas])
+    return instancias
 
-folder_path = 'instancias/maria_desiree/'
-# Lista de instâncias válidas (teste com AAA primeiro)
-arquivos = [
-    'AAA01226_0.dat', 'AAA01226_1.dat', 'AAA01226_2.dat', 'AAA01226_3.dat', 'AAA01226_4.dat',
-    'AAA012212_0.dat', 'AAA012212_1.dat', 'AAA012212_2.dat', 'AAA012212_3.dat', 'AAA012212_4.dat',
-    'AAA012225_0.dat', 'AAA012225_1.dat', 'AAA012225_2.dat', 'AAA012225_3.dat', 'AAA012225_4.dat',
-    'AAA012250_0.dat', 'AAA012250_1.dat', 'AAA012250_2.dat', 'AAA012250_3.dat', 'AAA012250_4.dat',
-    'AAA01246_0.dat', 'AAA01246_1.dat', 'AAA01246_2.dat', 'AAA01246_3.dat', 'AAA01246_4.dat',
-    'AAA012412_0.dat', 'AAA012412_1.dat', 'AAA012412_2.dat', 'AAA012412_3.dat', 'AAA012412_4.dat',
-    'AAA012425_0.dat', 'AAA012425_1.dat', 'AAA012425_2.dat', 'AAA012425_3.dat', 'AAA012425_4.dat',
-    'AAA012450_0.dat', 'AAA012450_1.dat', 'AAA012450_2.dat', 'AAA012450_3.dat', 'AAA012450_4.dat',
-    'AAA01266_0.dat', 'AAA01266_1.dat', 'AAA01266_2.dat', 'AAA01266_3.dat', 'AAA01266_4.dat',
-    'AAA012612_0.dat', 'AAA012612_1.dat', 'AAA012612_2.dat', 'AAA012612_3.dat', 'AAA012612_4.dat',
-    'AAA012625_0.dat', 'AAA012625_1.dat', 'AAA012625_2.dat', 'AAA012625_3.dat', 'AAA012625_4.dat',
-    'AAA012650_0.dat', 'AAA012650_1.dat', 'AAA012650_2.dat', 'AAA012650_3.dat', 'AAA012650_4.dat'
-]
-instancias = [a for a in arquivos if a.replace('.dat', '') not in instancias_resolvidas]
-# instancias = natsorted([f for f in os.listdir(folder_path)  if f.endswith('.dat') and f.startswith('AAA0') and f.replace('.dat', '') not in instancias_resolvidas])
 
-print(instancias)
-
-for file in instancias:
+def model_sy(folder_path, instancia):
+    """"Modelo como proposto por Sambasivan & Yahya (2005)"""
     # Dados da instância
-    data = read_dat_file(folder_path + file)
-    
+    data = read_dat_file(folder_path + instancia)
+
     # Modelo
-    m = gp.Model(file.replace('.dat', ''))
-    
+    m = gp.Model(instancia.replace('.dat', ''))
+
     # Conjuntos
     # Produtos (i)
     I = np.array([_ for _ in range(data['items'])])
@@ -223,36 +234,45 @@ for file in instancias:
     # Restrição de capacidade
     m.addConstrs((sum(b[i, j] * X[i, j, t] + f[i, j] * Z[i, j, t] for i in I) <= cap[j, t] for j in J for t in T)
              , name='restricao_capacidade')
+    m.update()
     
-    # Resolução
-    # Critérios de parada
-    m.Params.timelimit = 1800  # Tempo (default = inf)
-    # m.Params.MIPgap = 0.01  # Gap de otimalidade (default = 0.0001 = 0.01%)
-    # Otimização
-    m.optimize()
-    
-    # Parâmetros armazenáveis da resolução
-    inst = m.ModelName
-    plantas = len(J)
-    produtos = len(I)
-    periodos = len(T)
-    lb = round(m.ObjBound, 2)
-    ub = round(m.ObjVal, 2)
-    gap = round(m.MIPgap, 2)
-    time = round(m.Runtime, 2)
-    status = m.Status
+    return m, I, J, T
 
-    # Verificação de status de resolução se resultado deve ser guardado:
-    if status not in [11]:  # Não escreve caso seja interrompido pelo usuário 
-        # Escrever ou adicionar resultados no CSV
-        with open('results.csv', mode='a', newline='') as file:
-            writer = csv.writer(file)
 
-            # Escrever o cabeçalho apenas na primeira vez
-            if file.tell() == 0:  # Se o arquivo estiver vazio, escrever o cabeçalho
-                writer.writerow(['Instancia', 'Plantas', 'Produtos', 'Periodos', 
-                                'Lower Bound (LB)', 'Upper Bound (UB)', 'Gap', 
-                                'Tempo (s)', 'Status'])
+def main_solve(folder_path, results_file, time_limit):
+    for file in lista_instancias(folder_path, results_file):
+        model = model_sy(folder_path, file)
+        m, I, J, T = model[0], model[1], model[2], model[3]
+        
+        # Resolução
+        # Critérios de parada
+        m.Params.timelimit = time_limit  # Tempo (s) (default = inf)
+        # m.Params.MIPgap = 0.01  # Gap de otimalidade (default = 0.0001 = 0.01%)
+        # Otimização
+        m.optimize()
+        
+        # Parâmetros armazenáveis da resolução
+        inst = m.ModelName
+        plantas = len(J)
+        produtos = len(I)
+        periodos = len(T)
+        lb = round(m.ObjBound, 2)
+        ub = round(m.ObjVal, 2)
+        gap = round(m.MIPgap, 2)
+        time = round(m.Runtime, 2)
+        status = m.Status
 
-            # Adicionar os resultados da instância ao CSV
-            writer.writerow([inst, plantas, produtos, periodos, lb, ub, gap, time, status])
+        # Verificação de status de resolução se resultado deve ser guardado:
+        if status not in [11]:  # Não escreve caso seja interrompido pelo usuário 
+            # Escrever ou adicionar resultados no CSV
+            with open(results_file, mode='a', newline='') as file:
+                writer = csv.writer(file)
+
+                # Escrever o cabeçalho apenas na primeira vez
+                if file.tell() == 0:  # Se o arquivo estiver vazio, escrever o cabeçalho
+                    writer.writerow(['Instancia', 'Plantas', 'Produtos', 'Periodos', 
+                                    'Lower Bound (LB)', 'Upper Bound (UB)', 'Gap', 
+                                    'Tempo (s)', 'Status'])
+
+                # Adicionar os resultados da instância ao CSV
+                writer.writerow([inst, plantas, produtos, periodos, lb, ub, gap, time, status])

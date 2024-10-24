@@ -205,11 +205,11 @@ def model_sy(folder_path, instancia):
     
     # Variáveis de decisão
     # Quantidade produzida (i, j, t)
-    X = m.addVars(I, J, T, vtype=GRB.CONTINUOUS, name='X')
+    X = m.addVars(I, J, T, vtype=GRB.INTEGER, name='X')
     # Quantidade estocada (i, j, t)
-    Q = m.addVars(I, J, T, vtype=GRB.CONTINUOUS, name='Q')
+    Q = m.addVars(I, J, T, vtype=GRB.INTEGER, name='Q')
     # # Quantidade transportada (i, j, k(um outro j), t)
-    W = m.addVars(I, J, J, T, vtype=GRB.CONTINUOUS, name='W')
+    W = m.addVars(I, J, J, T, vtype=GRB.INTEGER, name='W')
     # # Variável de setup (binária) (i, j, t)
     Z = m.addVars(I, J, T, vtype=GRB.BINARY, name='Z')
     

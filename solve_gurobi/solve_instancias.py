@@ -2,11 +2,23 @@ from functions_model_sy import lista_instancias, model_sy
 import csv
 
 # Arquivo de salvamento
-results_csv = 'resultados1.csv'
+results_csv = 'resultados_multiplas_plantas.csv'
 # Pasta com instâncias a serem resolvidas
 folder_instancias = '../instancias/maria_desiree/'
 # Instâncias
-instancias = lista_instancias(folder_instancias, results_csv)
+instancias = [
+    'AAA01246_0.dat',
+    'AAA01246_1.dat',
+    'AAA012412_0.dat',
+    'AAA012412_1.dat',
+    'AAA01266_0.dat',
+    'AAA01266_1.dat',
+    'AAB01246_0.dat',
+    'AAB01246_1.dat',
+    'AAB01266_0.dat',
+    'AAB01266_1.dat'
+]
+
 
 for file in instancias:
     model = model_sy(folder_instancias, file)
@@ -14,7 +26,7 @@ for file in instancias:
     
     # Resolução
     # Critérios de parada
-    m.Params.timelimit = 10  # Tempo (s) (default = inf)
+    m.Params.timelimit = 1800  # Tempo (s) (default = inf)
     # m.Params.MIPgap = 0.01  # Gap de otimalidade (default = 0.0001 = 0.01%)
     # Otimização
     m.optimize()

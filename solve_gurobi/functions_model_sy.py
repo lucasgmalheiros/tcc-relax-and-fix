@@ -185,10 +185,11 @@ def main_solve(folder_path, results_file, time_limit):
         # Resolução
         # Critérios de parada
         m.Params.timelimit = time_limit  # Tempo (s) (default = inf)
+        m.params.SoftMemLimit = 8  # Limite de 8GB de RAM
         # m.Params.MIPgap = 0.01  # Gap de otimalidade (default = 0.0001 = 0.01%)
         # Otimização
         m.optimize()
-        
+    
         # Parâmetros armazenáveis da resolução
         inst = m.ModelName
         plantas = len(J)

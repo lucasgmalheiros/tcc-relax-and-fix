@@ -196,7 +196,10 @@ def main_solve(folder_path, results_file, time_limit):
         produtos = len(I)
         periodos = len(T)
         lb = round(m.ObjBound, 4)
-        ub = round(m.ObjVal, 4)
+        try:
+            ub = round(m.ObjVal, 4)
+        except AttributeError:  # If infeasible
+            ub = 'inf'
         gap = round(m.MIPgap, 4)
         time = round(m.Runtime, 4)
         status = m.Status

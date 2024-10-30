@@ -198,7 +198,7 @@ def main_solve(folder_path, results_file, time_limit):
         lb = round(m.ObjBound, 4)
         try:
             ub = round(m.ObjVal, 4)
-        except AttributeError:  # If infeasible
+        except AttributeError:
             ub = 'inf'
         gap = round(m.MIPgap, 4)
         time = round(m.Runtime, 4)

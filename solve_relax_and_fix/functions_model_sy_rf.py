@@ -212,6 +212,8 @@ def main_solve_rf (folder_path, results_file, time_limit, window_size, overlap_s
             m.optimize()
             runtime += m.Runtime
             status_list.append(m.Status)
+            if m.Status == GRB.INFEASIBLE:
+                break
 
             # Fixação das soluções obtidas considerando overlap
             for i in I:
@@ -229,17 +231,18 @@ def main_solve_rf (folder_path, results_file, time_limit, window_size, overlap_s
             print('k:', k, 'to:', to, 'tf:', tf - 1)
 
         # Última iteração
-        # Variáveis na janela tornam-se binárias
-        for i in I:
-            for j in J:
-                for t in range(to, tf):
-                    Z[i, j, t].setAttr("VType", GRB.BINARY)
-        m.update()
+        if m.Status != GRB.INFEASIBLE:
+            # Variáveis na janela tornam-se binárias
+            for i in I:
+                for j in J:
+                    for t in range(to, tf):
+                        Z[i, j, t].setAttr("VType", GRB.BINARY)
+            m.update()
 
-        # Última resolução
-        m.optimize()
-        runtime += m.Runtime
-        status_list.append(m.Status)
+            # Última resolução
+            m.optimize()
+            runtime += m.Runtime
+            status_list.append(m.Status)
         
         # Parâmetros armazenáveis da resolução
         inst = m.ModelName

@@ -1,3 +1,5 @@
+import sys
+sys.path.append(r'../')
 from functions_model_sy_rf import main_solve_rf
 
 # Parâmetros
@@ -10,9 +12,9 @@ TIME_LIMIT = 1800
     # Arquivo de salvamento
 results_csv = f'resultados{CONJUNTO}.csv'
     # Pasta com instâncias a serem resolvidas
-folder_instancias = f'../instancias/conjunto{CONJUNTO}/'
+folder_instancias = f'../../instancias/conjunto{CONJUNTO}/'
 
-w = 1  # Window
-y = 0  # Overlap
+w = 2  # Window
+y = 1  # Overlap
 
 main_solve_rf(folder_instancias, results_csv, TIME_LIMIT, window_size=w, overlap_size=y)

@@ -10,7 +10,7 @@ TIME_LIMIT = 1800
     # Arquivo de salvamento
 results_csv = f'resultados{CONJUNTO}.csv'
     # Pasta com instâncias a serem resolvidas
-folder_instancias = f'conjunto{CONJUNTO}/'
+folder_instancias = f'../instancias/conjunto{CONJUNTO}/'
 
 # Chama o solver
 main_solve(folder_instancias, results_csv, TIME_LIMIT)

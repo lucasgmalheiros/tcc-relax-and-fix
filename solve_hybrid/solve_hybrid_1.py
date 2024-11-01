@@ -10,9 +10,6 @@ TIME_LIMIT = 1800
     # Arquivo de salvamento
 results_csv = f'resultados{CONJUNTO}.csv'
     # Pasta com instâncias a serem resolvidas
-folder_instancias = f'conjunto{CONJUNTO}/'
-
-w = 3  # Window
-y = 1  # Overlap
+folder_instancias = f'../conjunto{CONJUNTO}/'
 
 main_solve_hybrid_matheuristic(folder_instancias, results_csv, TIME_LIMIT, 20, 3)

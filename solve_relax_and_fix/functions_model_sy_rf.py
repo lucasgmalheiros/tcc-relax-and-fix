@@ -181,6 +181,7 @@ def model_sy_relaxation(folder_path, instancia):
 def main_solve_rf (folder_path, results_file, time_limit, window_size, overlap_size):
     for file in lista_instancias(folder_path, results_file):
         # Criação do modelo
+        print(file)
         model = model_sy_relaxation(folder_path, file)
         m, I, J, T, Z = model[0], model[1], model[2], model[3], model[4]
 
@@ -206,13 +207,12 @@ def main_solve_rf (folder_path, results_file, time_limit, window_size, overlap_s
                 for j in J:
                     for t in range(to, tf):
                         Z[i, j, t].setAttr("VType", GRB.BINARY)
-            m.update()
 
             # Resolução do subprolema
             m.optimize()
             runtime += m.Runtime
             status_list.append(m.Status)
-            if m.Status == GRB.INFEASIBLE:
+            if m.Status == GRB.INFEASIBLE or m.SolCount == 0:
                 break
 
             # Fixação das soluções obtidas considerando overlap
@@ -221,7 +221,6 @@ def main_solve_rf (folder_path, results_file, time_limit, window_size, overlap_s
                     for t in range(to, tf - overlap_size):
                         Z[i, j, t].setAttr("LB", Z[i, j, t].X)
                         Z[i, j, t].setAttr("UB", Z[i, j, t].X)
-            m.update()
 
             # Atualização dos auxiliares
             k += 1
@@ -231,13 +230,12 @@ def main_solve_rf (folder_path, results_file, time_limit, window_size, overlap_s
             print('k:', k, 'to:', to, 'tf:', tf - 1)
 
         # Última iteração
-        if m.Status != GRB.INFEASIBLE:
+        if m.Status != GRB.INFEASIBLE and m.SolCount > 0:
             # Variáveis na janela tornam-se binárias
             for i in I:
                 for j in J:
                     for t in range(to, tf):
                         Z[i, j, t].setAttr("VType", GRB.BINARY)
-            m.update()
 
             # Última resolução
             m.optimize()
@@ -255,6 +253,8 @@ def main_solve_rf (folder_path, results_file, time_limit, window_size, overlap_s
         time = round(runtime, 4)
         if 3 in status_list:
             status = 3
+        elif m.SolCount == 0:
+            status = 99
         else:
             status = max(status_list)
 

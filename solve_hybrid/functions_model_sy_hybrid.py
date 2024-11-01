@@ -181,10 +181,11 @@ def model_sy_relaxation(folder_path, instancia):
 def main_solve_hybrid_matheuristic (folder_path, results_file, time_limit, neighboorhod_size, betta):
     for file in lista_instancias(folder_path, results_file):
         # Criação do modelo
+        print(file)
         model = model_sy_relaxation(folder_path, file)
         m, I, J, T, Z = model[0], model[1], model[2], model[3], model[4]
 
-        m.setParam('OutputFlag', 0)  # Desativa a exibição de logs
+        m.params.OutputFlag = 0  # Desativa a exibição de logs
         m.params.SoftMemLimit = 8  # Limite de 8GB de RAM
         m.Params.timelimit = time_limit / len(T)  # Tempo limite por subproblema (s)
         runtime = 0
@@ -213,7 +214,7 @@ def main_solve_hybrid_matheuristic (folder_path, results_file, time_limit, neigh
             m.optimize()
             runtime += m.Runtime
             status_list.append(m.Status)
-            if m.Status == GRB.INFEASIBLE:
+            if m.Status == GRB.INFEASIBLE or m.SolCount == 0:
                 break
 
             # Atualização dos auxiliares
@@ -229,7 +230,7 @@ def main_solve_hybrid_matheuristic (folder_path, results_file, time_limit, neigh
             Z0, Z1 = auxz0, auxz1
             k += 1
             
-            # Fixação das soluções obtidas após b períodos
+            # Fixação das soluções obtidas após betta períodos
             if k > betta:
                 for i in I:
                     for j in J:
@@ -237,7 +238,7 @@ def main_solve_hybrid_matheuristic (folder_path, results_file, time_limit, neigh
                         Z[i, j, k - 1 - betta].setAttr('UB', Z[i, j, k - 1 - betta].X)  # Upper bound fixado para a solução encontrada
 
         # Última iteração
-        if m.Status != GRB.INFEASIBLE:
+        if m.Status != GRB.INFEASIBLE and m.SolCount > 0:
             # Variáveis na janela tornam-se binárias
             for i in I:
                 for j in J:
@@ -262,6 +263,8 @@ def main_solve_hybrid_matheuristic (folder_path, results_file, time_limit, neigh
         time = round(runtime, 4)
         if 3 in status_list:
             status = 3
+        elif m.SolCount == 0:
+            status = 99
         else:
             status = max(status_list)
 

@@ -1,0 +1,7 @@
+Instancia,Plantas,Produtos,Windows,Overlap,Iterations,Lower Bound (LB),Upper Bound (UB),Gap,Tempo (s),Status_firsts,Status_last,N_solutions
+AAA00_12_2_5,2,5,1,0,1,inf,inf,inf,0.01,3,3,0
+AAA00_12_2_10,2,10,1,0,1,inf,inf,inf,0.021,3,3,0
+AAA00_12_2_15,2,15,1,0,1,inf,inf,inf,0.038,3,3,0
+AAA00_12_2_20,2,20,1,0,1,inf,inf,inf,0.062,3,3,0
+AAA00_12_2_50,2,50,1,0,1,inf,inf,inf,0.167,3,3,0
+AAA00_12_2_75,2,75,1,0,1,-3840.3,inf,inf,0.143,99,11,0

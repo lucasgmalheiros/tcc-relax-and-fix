@@ -94,6 +94,12 @@ def read_instancia(file_path):
             "transfer_costs": transfer_costs}
 
 
+import numpy as np
+from scipy.stats import skew, kurtosis
+
+import numpy as np
+from scipy.stats import skew, kurtosis
+
 def extract_features(problem_data):
     # Extract structured data from the problem
     I = np.array([_ for _ in range(problem_data['items'])])  # Products
@@ -114,12 +120,12 @@ def extract_features(problem_data):
         'num_products': len(I),
         'num_plants': len(J),
         'num_periods': len(T),
+        'binary_vars': len(I) * len(J) * len(T),
 
         # Demand statistics
         'total_demand': np.sum(d),
         'avg_demand_per_product': np.mean(d),
         'variance_demand_per_product': np.var(d),
-        'max_demand_per_product': np.max(d),
         'std_demand_per_product': np.std(d),
 
         # Capacity and utilization statistics
@@ -143,11 +149,9 @@ def extract_features(problem_data):
         # Cost statistics
         'avg_setup_cost': np.mean(s),
         'variance_setup_cost': np.var(s),
-        'max_setup_cost': np.max(s),
         'std_setup_cost': np.std(s),
         'avg_production_cost': np.mean(c),
         'variance_production_cost': np.var(c),
-        'max_production_cost': np.max(c),
         'std_production_cost': np.std(c),
         'total_transportation_cost': np.sum(r),
         'avg_inventory_cost': np.mean(h),
@@ -158,9 +162,33 @@ def extract_features(problem_data):
         'setup_to_production_cost_ratio': np.sum(s) / np.sum(c),
         'avg_demand_to_setup_cost_ratio': np.mean(d) / np.mean(s),
         'total_cost_to_demand_ratio': (np.sum(s) + np.sum(c)) / np.sum(d),
+
+        # **Skewness and Kurtosis for More Features**
+        'skew_demand': skew(d.flatten()),  # Skewness of the demand distribution
+        'kurt_demand': kurtosis(d.flatten()),  # Kurtosis of the demand distribution
+        'skew_setup_cost': skew(s.flatten()),  # Skewness of setup cost
+        'kurt_setup_cost': kurtosis(s.flatten()),  # Kurtosis of setup cost
+        'skew_production_cost': skew(c.flatten()),  # Skewness of production cost
+        'kurt_production_cost': kurtosis(c.flatten()),  # Kurtosis of production cost
+        'skew_utilization': skew([np.sum(f[:, j] + b[:, j] * d[:, j, t]) / cap[j, t] for t in T for j in J]),
+        'kurt_utilization': kurtosis([np.sum(f[:, j] + b[:, j] * d[:, j, t]) / cap[j, t] for t in T for j in J]),
+
+        # **Additional Features: Skewness and Kurtosis for other features**
+        'skew_capacity': skew(cap.flatten()),  # Skewness of capacity
+        'kurt_capacity': kurtosis(cap.flatten()),  # Kurtosis of capacity
+        'skew_production_time': skew(b.flatten()),  # Skewness of production time
+        'kurt_production_time': kurtosis(b.flatten()),  # Kurtosis of production time
+        'skew_setup_time': skew(f.flatten()),  # Skewness of setup time
+        'kurt_setup_time': kurtosis(f.flatten()),  # Kurtosis of setup time
+        'skew_transportation_cost': skew(r.flatten()),  # Skewness of transportation costs
+        'kurt_transportation_cost': kurtosis(r.flatten()),  # Kurtosis of transportation costs
+        'skew_inventory_cost': skew(h.flatten()),  # Skewness of inventory costs
+        'kurt_inventory_cost': kurtosis(h.flatten()),  # Kurtosis of inventory costs
     }
 
     return instance_features
+
+
 
 
 # Create dataset from all instances in a folder
@@ -185,12 +213,10 @@ def create_dataset(instances_folder):
     return df
 
 
-# Example usage
-instances_folder = '../instancias/multi_plant_instances/'
-df = create_dataset(instances_folder)
+if __name__ == '__main__':
+    # Example usage
+    instances_folder = '../instancias/multi_plant_instances/'
+    df = create_dataset(instances_folder)
 
-# Save the dataset to a CSV file
-df.to_csv('multi_plant_instance_features.csv', index=False)
-
-# Display the first few rows
-print(df.head())
+    # Save the dataset to a CSV file
+    df.to_csv('multi_plant_instance_features.csv', index=False)

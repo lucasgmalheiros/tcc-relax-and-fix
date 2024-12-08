@@ -3,6 +3,7 @@ import numpy as np
 import h2o
 from h2o.estimators import H2OGradientBoostingEstimator
 from h2o.estimators import H2OXGBoostEstimator
+from h2o.grid.grid_search import H2OGridSearch
 from sklearn.metrics import confusion_matrix, f1_score, precision_recall_curve, auc
 
 def convert_to_h2o_frame(data: pd.DataFrame) -> h2o.H2OFrame:
@@ -30,14 +31,17 @@ def convert_to_h2o_frame(data: pd.DataFrame) -> h2o.H2OFrame:
 
 def create_dataset(dataset_features: pd.DataFrame, dataset_results: pd.DataFrame) -> pd.DataFrame:
     """Merge resultados e features dataset"""
+    print('Creating complete dataset...')
     dataset_results = dataset_results[['Instancias'] + [col for col in dataset_results.columns if col.startswith('Obj_') or col.startswith('Time_')]]
     dataset_results = dataset_results[dataset_results['Obj_RF_T_0'] != np.inf]  # Remove infactíveis
     data = dataset_features.merge(dataset_results, left_on='instance', right_on='Instancias', how='inner').drop(columns=['Instancias', 'instance'])
+    print('Dataset processed successfully!')
     return data
 
 
 def create_target(data: pd.DataFrame, target_type: str, is_binary: bool=False) -> pd.DataFrame:
     """Cria target com base nos dados de resolução do modelo"""
+    print('Defining target variable...')
     objective_columns = [col for col in data.columns if col.startswith('Obj_')]
     time_columns = [col for col in data.columns if col.startswith('Time_')]
     # Seleciona o método com menor função objetivo
@@ -60,7 +64,46 @@ def create_target(data: pd.DataFrame, target_type: str, is_binary: bool=False) -
     data = data.drop(columns=objective_columns + time_columns)
     # Shuffle
     data = data.sample(frac=1)
+    print('Target column ready!')
     return data
+
+
+def train_gbm_model(X: h2o.H2OFrame, y: h2o.H2OFrame, dataset_train, tune: bool=False) -> H2OGradientBoostingEstimator:
+    """Treino de modelo de classificação utilizando Gradient Boosting Machine"""
+    print('Training GBM model...')
+    gbm_model = H2OGradientBoostingEstimator(
+        nfolds=20,
+        keep_cross_validation_predictions=True,
+        seed=2112,
+        stopping_rounds=10,
+        stopping_metric='AUTO',
+        stopping_tolerance=0.001,
+        balance_classes=False,
+        ntrees=150,
+        max_depth=10,
+    )
+    if tune:
+        hyper_params = {
+            'learn_rate': list(np.round(np.arange(0.01, 0.1, 0.01), 3)),
+            'max_depth': list(np.arange(5, 10, 1)),
+            'ntrees': list(np.arange(50, 150, 20)),
+            'sample_rate': list(np.round(np.arange(0.5, 0.9, 0.1), 3)),
+            'col_sample_rate': list(np.round(np.arange(0.5, 1.0, 0.1), 3)),
+        }
+        # Tipo de pesquisa da grid. Em caso de RandomDiscrete, corre até max_models(n modelos)
+        search_criteria = {
+            'strategy': 'RandomDiscrete',
+            'max_models': 10,
+            # 'max_runtime_secs': 180,
+            'seed': 2112
+        }
+        gbm_model = H2OGridSearch(model=gbm_model, 
+                                  search_criteria=search_criteria, 
+                                  hyper_params=hyper_params)
+    # Isso pode ser o modelo direto ou grid search a depender do parâmetro "tune"
+    gbm_model.train(x=X, y=y, training_frame=dataset_train)
+    print('GBM model trained!')
+    return gbm_model
 
 
 if __name__ == '__main__':
@@ -85,30 +128,19 @@ if __name__ == '__main__':
     # Setup treino
     target = TARGET_TYPE
     predictors = [c for c in hf_train.columns if c != target]
-    # Modelo
-    gbm_model = H2OGradientBoostingEstimator(
-    nfolds=20,
-    keep_cross_validation_predictions=True,
-    seed=2112,
-    stopping_rounds=10,
-    stopping_metric="AUTO",
-    stopping_tolerance=0.001,
-    balance_classes=False
-    )
-    # Treino
-    model = gbm_model
-    model.train(x=predictors, y=target, training_frame=hf_train)
+    # Treino (escolher modelo via função)
+    model = train_gbm_model(X=predictors, y=target, dataset_train=hf_train, tune=False)
     # Previsões
     actual = hf_train[target].as_data_frame(use_multi_thread=True)[target]
     predictions = model.cross_validation_holdout_predictions()
     predict = predictions[0].as_data_frame(use_multi_thread=True)['predict']
     # Confusion matrix
     cm = confusion_matrix(actual, predict)
-    print("Confusion Matrix:\n", cm)
+    print('Confusion Matrix:\n', cm)
     # Métricas
         # Precisão
     precision = cm.trace() / cm.sum()
     print(precision)
 
     # Shutdown H2O
-    # h2o.cluster().shutdown()
+    h2o.cluster().shutdown()

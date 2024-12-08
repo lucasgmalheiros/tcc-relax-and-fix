@@ -184,7 +184,28 @@ def extract_features(problem_data):
         'kurt_transportation_cost': kurtosis(r.flatten()),  # Kurtosis of transportation costs
         'skew_inventory_cost': skew(h.flatten()),  # Skewness of inventory costs
         'kurt_inventory_cost': kurtosis(h.flatten()),  # Kurtosis of inventory costs
+
+        # **Percentiles and IQR**
+        'p25_demand': np.percentile(d.flatten(), 25),
+        'p50_demand': np.percentile(d.flatten(), 50),
+        'p75_demand': np.percentile(d.flatten(), 75),
+        'iqr_demand': np.percentile(d.flatten(), 75) - np.percentile(d.flatten(), 25),
+
+        # **Coefficient of Variation (CV) for Demand**
+        'cv_demand': np.std(d.flatten()) / np.mean(d.flatten()) if np.mean(d.flatten()) != 0 else 0,
+
+        # **Ratios for setup and production costs**
+        'setup_to_production_time_ratio': np.sum(f) / np.sum(b),
+        'capacity_utilization_efficiency': np.sum(f) / np.sum(cap),
+
+        # **Interactions between features**
+        'demand_to_capacity_interaction': np.sum(d) * np.sum(cap),
+        'demand_to_cost_interaction': np.sum(d) * (np.sum(s) + np.sum(c)),
+
+        # **Additional statistics: time per unit of cost**
+        'time_per_unit_of_cost': np.sum(b + f) / (np.sum(s) + np.sum(c)) if (np.sum(s) + np.sum(c)) != 0 else 0
     }
+
 
     return instance_features
 

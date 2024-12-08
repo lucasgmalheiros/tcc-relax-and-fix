@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+from scipy.stats import skew, kurtosis
 
 def read_instancia(file_path):
     """"Função para a leitura das instâncias geradas"""
@@ -93,12 +94,6 @@ def read_instancia(file_path):
             "demand_matrix": final_demand_matrix,
             "transfer_costs": transfer_costs}
 
-
-import numpy as np
-from scipy.stats import skew, kurtosis
-
-import numpy as np
-from scipy.stats import skew, kurtosis
 
 def extract_features(problem_data):
     # Extract structured data from the problem
@@ -206,10 +201,7 @@ def extract_features(problem_data):
         'time_per_unit_of_cost': np.sum(b + f) / (np.sum(s) + np.sum(c)) if (np.sum(s) + np.sum(c)) != 0 else 0
     }
 
-
     return instance_features
-
-
 
 
 # Create dataset from all instances in a folder

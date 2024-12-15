@@ -109,6 +109,8 @@ def extract_features(problem_data):
     r = np.array(problem_data['transfer_costs'])  # Transportation costs (j, k)
     h = np.array(problem_data['inventory_costs'])  # Inventory costs (i, j)
 
+    utilization = [np.sum(f[:, j] + b[:, j] * d[:, j, t]) / cap[j, t] for t in T for j in J]
+
     # Calculate instance features
     instance_features = {
         # Basic instance-level features
@@ -117,88 +119,79 @@ def extract_features(problem_data):
         'num_periods': len(T),
         'binary_vars': len(I) * len(J) * len(T),
 
-        # Demand statistics
+        # DEMAND
         'total_demand': np.sum(d),
-        'avg_demand_per_product': np.mean(d),
-        'variance_demand_per_product': np.var(d),
-        'std_demand_per_product': np.std(d),
-
-        # Capacity and utilization statistics
-        'mean_utilization': np.mean([
-            np.sum(f[:, j] + b[:, j] * d[:, j, t]) / cap[j, t]
-            for t in T for j in J
-        ]),
-        'max_utilization': np.max([
-            np.sum(f[:, j] + b[:, j] * d[:, j, t]) / cap[j, t]
-            for t in T for j in J
-        ]),
-        'min_utilization': np.min([
-            np.sum(f[:, j] + b[:, j] * d[:, j, t]) / cap[j, t]
-            for t in T for j in J
-        ]),
-        'std_utilization': np.std([
-            np.sum(f[:, j] + b[:, j] * d[:, j, t]) / cap[j, t]
-            for t in T for j in J
-        ]),
-
-        # Cost statistics
-        'avg_setup_cost': np.mean(s),
-        'variance_setup_cost': np.var(s),
-        'std_setup_cost': np.std(s),
-        'avg_production_cost': np.mean(c),
-        'variance_production_cost': np.var(c),
-        'std_production_cost': np.std(c),
-        'total_transportation_cost': np.sum(r),
-        'avg_inventory_cost': np.mean(h),
-        'variance_inventory_cost': np.var(h),
-
-        # Relationships between features
-        'demand_to_capacity_ratio': np.sum(d) / np.sum(cap),
-        'setup_to_production_cost_ratio': np.sum(s) / np.sum(c),
-        'avg_demand_to_setup_cost_ratio': np.mean(d) / np.mean(s),
-        'total_cost_to_demand_ratio': (np.sum(s) + np.sum(c)) / np.sum(d),
-
-        # **Skewness and Kurtosis for More Features**
-        'skew_demand': skew(d.flatten()),  # Skewness of the demand distribution
-        'kurt_demand': kurtosis(d.flatten()),  # Kurtosis of the demand distribution
-        'skew_setup_cost': skew(s.flatten()),  # Skewness of setup cost
-        'kurt_setup_cost': kurtosis(s.flatten()),  # Kurtosis of setup cost
-        'skew_production_cost': skew(c.flatten()),  # Skewness of production cost
-        'kurt_production_cost': kurtosis(c.flatten()),  # Kurtosis of production cost
-        'skew_utilization': skew([np.sum(f[:, j] + b[:, j] * d[:, j, t]) / cap[j, t] for t in T for j in J]),
-        'kurt_utilization': kurtosis([np.sum(f[:, j] + b[:, j] * d[:, j, t]) / cap[j, t] for t in T for j in J]),
-
-        # **Additional Features: Skewness and Kurtosis for other features**
-        'skew_capacity': skew(cap.flatten()),  # Skewness of capacity
-        'kurt_capacity': kurtosis(cap.flatten()),  # Kurtosis of capacity
-        'skew_production_time': skew(b.flatten()),  # Skewness of production time
-        'kurt_production_time': kurtosis(b.flatten()),  # Kurtosis of production time
-        'skew_setup_time': skew(f.flatten()),  # Skewness of setup time
-        'kurt_setup_time': kurtosis(f.flatten()),  # Kurtosis of setup time
-        'skew_transportation_cost': skew(r.flatten()),  # Skewness of transportation costs
-        'kurt_transportation_cost': kurtosis(r.flatten()),  # Kurtosis of transportation costs
-        'skew_inventory_cost': skew(h.flatten()),  # Skewness of inventory costs
-        'kurt_inventory_cost': kurtosis(h.flatten()),  # Kurtosis of inventory costs
-
-        # **Percentiles and IQR**
+        'min_demand': np.min(d),
+        'avg_demand': np.mean(d),
+        'max_demand': np.max(d),
+        'std_demand': np.std(d),
+        'skew_demand': skew(d.flatten()),
+        'kurt_demand': kurtosis(d.flatten()),
+        'cv_demand': np.std(d.flatten()) / np.mean(d.flatten()) if np.mean(d.flatten()) != 0 else 0,
         'p25_demand': np.percentile(d.flatten(), 25),
         'p50_demand': np.percentile(d.flatten(), 50),
         'p75_demand': np.percentile(d.flatten(), 75),
         'iqr_demand': np.percentile(d.flatten(), 75) - np.percentile(d.flatten(), 25),
 
-        # **Coefficient of Variation (CV) for Demand**
-        'cv_demand': np.std(d.flatten()) / np.mean(d.flatten()) if np.mean(d.flatten()) != 0 else 0,
+        # CAPACITY
+        'total_capacity': np.sum(cap),
+        'min_capacity': np.min(cap),
+        'avg_capacity': np.mean(cap),
+        'max_capacity': np.max(cap),
+        'std_capacity': np.std(cap),
+        'skew_capacity': skew(cap.flatten()),
+        'kurt_capacity': kurtosis(cap.flatten()),
+        'cv_capacity': np.std(cap.flatten()) / np.mean(cap.flatten()) if np.mean(cap.flatten()) != 0 else 0,
 
-        # **Ratios for setup and production costs**
+        # PRODUCTION TIME
+        'skew_production_time': skew(b.flatten()),
+        'kurt_production_time': kurtosis(b.flatten()),
+
+        # SETUP TIME
+        'skew_setup_time': skew(f.flatten()),
+        'kurt_setup_time': kurtosis(f.flatten()),
+
+        # PRODUCTION COSTS
+        'avg_production_cost': np.mean(c),
+        'std_production_cost': np.std(c),
+        'skew_production_cost': skew(c.flatten()),
+        'kurt_production_cost': kurtosis(c.flatten()),
+
+        # SETUP COSTS
+        'avg_setup_cost': np.mean(s),
+        'std_setup_cost': np.std(s),
+        'skew_setup_cost': skew(s.flatten()),
+        'kurt_setup_cost': kurtosis(s.flatten()),
+
+        # TRANSPORTATION COSTS
+        'total_transportation_cost': np.sum(r),
+        'skew_transportation_cost': skew(r.flatten()),
+        'kurt_transportation_cost': kurtosis(r.flatten()),
+
+        # INVENTORY COSTS
+        'avg_inventory_cost': np.mean(h),
+        'std_inventory_cost': np.std(h),
+        'skew_inventory_cost': skew(h.flatten()),
+        'kurt_inventory_cost': kurtosis(h.flatten()),
+
+        # UTILIZATION
+        'min_utilization': np.min(utilization),
+        'mean_utilization': np.mean(utilization),
+        'max_utilization': np.max(utilization),
+        'std_utilization': np.std(utilization),
+        'skew_utilization': skew(utilization),
+        'kurt_utilization': kurtosis(utilization),
+
+        # RELATIONSHIPS
+        'demand_to_capacity_ratio': np.sum(d) / np.sum(cap),
+        'setup_to_production_cost_ratio': np.sum(s) / np.sum(c),
+        'avg_demand_to_setup_cost_ratio': np.mean(d) / np.mean(s),
+        'total_cost_to_demand_ratio': (np.sum(s) + np.sum(c)) / np.sum(d),
         'setup_to_production_time_ratio': np.sum(f) / np.sum(b),
         'capacity_utilization_efficiency': np.sum(f) / np.sum(cap),
-
-        # **Interactions between features**
         'demand_to_capacity_interaction': np.sum(d) * np.sum(cap),
         'demand_to_cost_interaction': np.sum(d) * (np.sum(s) + np.sum(c)),
-
-        # **Additional statistics: time per unit of cost**
-        'time_per_unit_of_cost': np.sum(b + f) / (np.sum(s) + np.sum(c)) if (np.sum(s) + np.sum(c)) != 0 else 0
+        'time_per_unit_of_cost': np.sum(b + f) / (np.sum(s) + np.sum(c)) if (np.sum(s) + np.sum(c)) != 0 else 0,
     }
 
     return instance_features

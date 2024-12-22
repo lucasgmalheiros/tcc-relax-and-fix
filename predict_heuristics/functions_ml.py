@@ -2,12 +2,6 @@ import pandas as pd
 import numpy as np
 import logging
 from sklearn.model_selection import train_test_split
-from sklearn.multioutput import MultiOutputClassifier, ClassifierChain
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import hamming_loss, f1_score, jaccard_score, accuracy_score
-from sklearn.feature_selection import SelectKBest, f_classif
-logging.basicConfig(level=logging.INFO)
 
 def create_dataset(dataset_features: pd.DataFrame, dataset_results: pd.DataFrame) -> pd.DataFrame:
     """Merge results and features dataset"""
@@ -101,41 +95,4 @@ def train_test_split_multilabel(data: pd.DataFrame, test_size: float = 0.2, rand
 
 
 if __name__ == '__main__':
-    # PARAMETERS
-    BINARY_CLASSIFICATON = False
-    TOLERANCE_LIMIT = 0.005
-
-    # 1. Get dataset
-    logging.info('Creating complete dataset...')
-    results = pd.read_csv('datasets/instances_results.csv')
-    features = pd.read_csv('datasets/multi_plant_instance_features.csv')
-    dataset = create_dataset(features, results)
-    logging.info('Dataset processed successfully!')
-
-    # 2. Create target columns for multi label classification
-    dataset = create_multi_label_columns(dataset, TOLERANCE_LIMIT)
-
-    # 3. Train and test split
-    X_train, X_test, y_train, y_test = train_test_split_multilabel(dataset, test_size=0.2, random_state=2112, label_prefix='RF_')
-
-    # 4. Creating the MultiOutput Classifier
-    classifier = MultiOutputClassifier(RandomForestClassifier(n_estimators=100, random_state=2112))
-
-    # 5. Fitting the classifier on the training data
-    classifier.fit(X_train, y_train)
-
-    # 6. Making predictions on the test set
-    predictions = classifier.predict(X_test)
-
-    # 7. Evaluate the model
-    hamming = hamming_loss(y_test, predictions)
-    print("Hamming Loss:", hamming)
-
-    f1 = f1_score(y_test, predictions, average='micro')
-    print("Micro-Averaged F1 Score:", f1)
-
-    jaccard = jaccard_score(y_test, predictions, average='samples')
-    print("Jaccard Similarity Score:", jaccard)
-
-    subset_accuracy = accuracy_score(y_test, predictions)
-    print("Subset Accuracy:", subset_accuracy)
+    pass

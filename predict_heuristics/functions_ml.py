@@ -7,7 +7,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import hamming_loss, f1_score, jaccard_score, accuracy_score
 from sklearn.feature_selection import SelectKBest, f_classif
-from xgboost import XGBClassifier
 logging.basicConfig(level=logging.INFO)
 
 def create_dataset(dataset_features: pd.DataFrame, dataset_results: pd.DataFrame) -> pd.DataFrame:
@@ -17,7 +16,7 @@ def create_dataset(dataset_features: pd.DataFrame, dataset_results: pd.DataFrame
     # Remove infeasible instances from results
     dataset_results = dataset_results[dataset_results['Obj_RF_T_0'] != np.inf]
     # Merge features and results (inner join to remove infeasibles)
-    data = dataset_features.merge(dataset_results, left_on='instance', right_on='Instancias', how='inner').drop(columns=['Instancias', 'instance'])
+    data = dataset_features.merge(dataset_results, left_on='instance', right_on='Instancias', how='inner').drop(columns=['Instancias'])
     # Shuffle data
     data = data.sample(frac=1, random_state=2112)
     return data
@@ -94,6 +93,7 @@ def train_test_split_multilabel(data: pd.DataFrame, test_size: float = 0.2, rand
     feature_columns = [col for col in data.columns if col not in label_columns]
     # Separate features and labels
     X = data[feature_columns]
+    X = X.drop(columns='instance')
     Y = data[label_columns]
     # Perform train-test split
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)

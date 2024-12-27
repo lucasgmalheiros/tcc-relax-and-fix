@@ -2,7 +2,7 @@ import functions_ml as fml
 import pandas as pd
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import hamming_loss, f1_score, jaccard_score, accuracy_score
+from sklearn.metrics import hamming_loss, f1_score, jaccard_score, accuracy_score, multilabel_confusion_matrix
 
 # PARAMETERS
 BINARY_CLASSIFICATON = False
@@ -40,3 +40,20 @@ print("Jaccard Similarity Score:", jaccard)
 
 subset_accuracy = accuracy_score(y_test, predictions)
 print("Subset Accuracy:", subset_accuracy)
+
+mcm = multilabel_confusion_matrix(y_test, predictions)
+
+# Display the confusion matrix for each label
+label_names = y_train.columns
+for label, matrix in zip(label_names, mcm):
+    print(f"Confusion Matrix for {label}:")
+    print(matrix)
+    tn, fp, fn, tp = matrix.ravel()  # Unpack the confusion matrix
+    precision = tp / (tp + fp) if tp + fp > 0 else 0
+    recall = tp / (tp + fn) if tp + fn > 0 else 0
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0
+    print(f"Metrics for {label}:")
+    print(f"Precision: {precision:.2f}")
+    print(f"Recall: {recall:.2f}")
+    print(f"F1 Score: {f1:.2f}")
+    print("\n")

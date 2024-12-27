@@ -16,7 +16,39 @@ def create_dataset(dataset_features: pd.DataFrame, dataset_results: pd.DataFrame
     return data
 
 
-def create_target(data: pd.DataFrame, tolerance: float = 0.01, time_limit: float = 0.99 * 1800, binary_classification: bool = False) -> pd.DataFrame:
+def create_binary_target(data: pd.DataFrame, tolerance: float = 0.01, time_limit: float = 0.99 * 1800) -> pd.DataFrame:
+    """Create binary target based on 2 groups of methods derived from hierarchical clustering results"""
+    objective_columns = [col for col in data.columns if col.startswith('Obj_')]
+    time_columns = [col for col in data.columns if col.startswith('Time_')]
+    # Prepare to calculate the best method per instance
+    data['TARGET'] = None
+    # Iterate over each row to determine the best method according to the defined methodology
+    for index, row in data.iterrows():
+        # Get the minimum objective function value
+        objective_values = row[objective_columns]
+        best_obj = objective_values.min()
+        best_method = objective_values.idxmin()  # Index of method with the minimum objective value
+        # Calculate deviation and filter methods within the acceptable tolerance
+        deviations = (objective_values - best_obj) / best_obj
+        equivalent_methods = deviations[deviations <= tolerance].index.tolist()
+        # Select the method with the shortest time within the tolerance range
+        corresponding_times = ['Time_' + method.replace('Obj_', '') for method in equivalent_methods]
+        times = row[corresponding_times]
+        # Check if any method finishes before the time limit
+        valid_times = times[times < time_limit]
+        if not valid_times.empty:
+            # Get the method with the minimum time
+            fastest_method = valid_times.idxmin()
+            data.at[index, 'TARGET'] = fastest_method.replace('Time_', '')
+        else:  # If there are no faster method, keep the one with the minimum objective value as target
+            data.at[index, 'TARGET'] = best_method.replace('Obj_', '')
+    data['TARGET'] = data['TARGET'].apply(lambda x: 'GroupA' if x in ['RF_1_0', 'RF_2_0', 'RF_2_1', 'RF_3_0', 'RF_3_1', 'RF_4_0'] else 'GroupB')
+    # Remove results columns
+    data = data.drop(columns=objective_columns + time_columns)
+    return data
+
+
+def create_multiclass_target(data: pd.DataFrame, tolerance: float = 0.01, time_limit: float = 0.99 * 1800) -> pd.DataFrame:
     """Define a single target for each entry in dataset based on the lowest objective and quickest time within a tolerance level."""
     objective_columns = [col for col in data.columns if col.startswith('Obj_')]
     time_columns = [col for col in data.columns if col.startswith('Time_')]
@@ -44,15 +76,12 @@ def create_target(data: pd.DataFrame, tolerance: float = 0.01, time_limit: float
         else:  # If there are no faster method, keep the one with the minimum objective value as target
             data.at[index, 'TARGET'] = best_method.replace('Obj_', '')
             data.at[index, 'TARGET_TIME'] = row['Time_' + best_method.replace('Obj_', '')]
-    # For binary classification, the target can only be Gurobi or RF. Choose this for higher level analysis
-    if binary_classification:
-        data['TARGET'] = data['TARGET'].apply(lambda x: 'Gurobi' if x == 'RF_T_0' else 'RF')
     # Remove results columns
     data = data.drop(columns=objective_columns + time_columns)
     return data
 
 
-def create_multi_label_columns(data: pd.DataFrame, tolerance: float) -> pd.DataFrame:
+def create_multi_label_target(data: pd.DataFrame, tolerance: float) -> pd.DataFrame:
     """
     Create multi-label binary columns for each method based on a tolerance limit.
     Each method will have a column, with 1 indicating the method is within the tolerance and 0 otherwise.

@@ -14,7 +14,7 @@ features = pd.read_csv('datasets/multi_plant_instance_features.csv')
 dataset = fml.create_dataset(features, results)
 
 # 2. Create target columns for multi label classification
-dataset = fml.create_multi_label_columns(dataset, TOLERANCE_LIMIT)
+dataset = fml.create_multi_label_target(dataset, TOLERANCE_LIMIT)
 
 # 3. Train and test split
 X_train, X_test, y_train, y_test = fml.train_test_split_multilabel(dataset, test_size=0.3, random_state=2112, label_prefix='RF_')

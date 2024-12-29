@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import logging
 from sklearn.model_selection import train_test_split
 
 def create_dataset(dataset_features: pd.DataFrame, dataset_results: pd.DataFrame) -> pd.DataFrame:
@@ -121,6 +120,41 @@ def train_test_split_multilabel(data: pd.DataFrame, test_size: float = 0.2, rand
     # Perform train-test split
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
     return X_train, X_test, y_train, y_test
+
+
+def feature_selection(X: pd.DataFrame) -> pd.DataFrame:
+    """Apply feature selection steps over features dataframe"""
+    # Check for constant columns
+    constant_columns = X.columns[X.nunique() == 1]
+    X = X.drop(columns=constant_columns)
+    # High correlated features (> 0.9)
+    high_corr_features = ['p50_capacity', 'p75_capacity', 'p25_capacity', 'max_capacity',
+                        'skew_inventory_cost', 'skew_production_cost', 'p75_setup_cost',
+                        'max_setup_cost', 'p50_setup_cost', 'std_setup_cost', 'p25_setup_cost',
+                        'iqr_setup_cost', 'p75_setup_time', 'p50_setup_time', 'max_setup_time',
+                        'std_setup_time', 'p25_setup_time', 'iqr_setup_time', 'cv_transportation_cost',
+                        'skew_transportation_cost', 'p25_transportation_cost', 'p50_transportation_cost',
+                        'max_transportation_cost', 'p50_utilization', 'total_production_cost', 'total_inventory_cost',
+                        'total_demand', 'total_production_time', 'total_capacity', 'total_setup_time', 'p25_demand',
+                        'iqr_utilization', 'total_utilization', 'min_capacity', 'min_setup_time', 'total_transportation_cost',
+                        'kurt_transportation_cost', 'avg_capacity', 'cv_utilization', 'iqr_capacity', 'kurt_inventory_cost',
+                        'skew_demand', 'cv_production_cost']
+    X = X.drop(columns=high_corr_features)
+    # Unimportant features for binary classification (random forest importance + permutation importance)
+    unimportant_features = ['min_production_time', 'max_production_cost', 'p25_production_cost', 
+                            'p50_production_cost', 'p75_production_cost', 'iqr_production_cost', 
+                            'iqr_inventory_cost', 'p25_inventory_cost', 'p75_inventory_cost', 'min_demand', 
+                            'avg_production_cost', 'p50_production_time', 'p75_production_time', 
+                            'std_production_cost', 'cv_inventory_cost', 'std_inventory_cost', 'min_production_cost',
+                            'std_demand', 'kurt_demand', 'avg_inventory_cost',
+                            'std_production_time', 'skew_production_time', 'kurt_production_time',
+                            'cv_production_time', 'p25_production_time', 'iqr_production_time',
+                            'max_production_time', 'avg_production_time', 'skew_setup_time',
+                            'p50_demand', 'avg_demand', 'iqr_demand', 'cv_demand', 
+                            'kurt_production_cost', 'cv_setup_cost', 'p75_transportation_cost', 'p75_demand', 
+                            'cv_setup_time'] # 'num_products' 
+    X = X.drop(columns=unimportant_features)
+    return X
 
 
 if __name__ == '__main__':

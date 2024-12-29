@@ -1,0 +1,13 @@
+Feature 1,Feature 2,Correlation
+avg_capacity,std_utilization,0.8952772530819236
+avg_demand,skew_demand,0.8290687149257969
+avg_transportation_cost,skew_transportation_cost,0.9492765826069144
+max_utilization,std_utilization,0.871760044444541
+min_utilization,std_utilization,0.8577770367658126
+num_plants,std_transportation_cost,0.8753546291176914
+num_plants,skew_transportation_cost,0.8373869921277022
+num_products,avg_capacity,0.9945931679416296
+num_products,std_utilization,0.8956898348428695
+std_demand,kurt_demand,0.877590653185237
+std_inventory_cost,kurt_inventory_cost,0.9852275686838095
+std_transportation_cost,skew_transportation_cost,0.8468633070993158

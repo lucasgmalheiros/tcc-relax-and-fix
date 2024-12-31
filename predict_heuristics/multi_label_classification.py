@@ -6,7 +6,7 @@ from sklearn.metrics import hamming_loss, f1_score, jaccard_score, accuracy_scor
 
 # PARAMETERS
 BINARY_CLASSIFICATON = False
-TOLERANCE_LIMIT = 0.5 / 100
+TOLERANCE_LIMIT = 0.01 / 100
 
 # 1. Get dataset
 results = pd.read_csv('datasets/instances_results.csv')
@@ -17,7 +17,7 @@ dataset = fml.create_dataset(features, results)
 dataset = fml.create_multi_label_target(dataset, TOLERANCE_LIMIT)
 
 # 3. Train and test split
-X_train, X_test, y_train, y_test = fml.train_test_split_multilabel(dataset, test_size=0.3, random_state=2112, label_prefix='RF_')
+X_train, X_test, y_train, y_test = fml.train_test_split_multi_label(dataset, test_size=0.3, random_state=2112, label_prefix='RF_')
 
 # 4. Creating the MultiOutput Classifier
 classifier = MultiOutputClassifier(RandomForestClassifier(n_estimators=100, random_state=2112))

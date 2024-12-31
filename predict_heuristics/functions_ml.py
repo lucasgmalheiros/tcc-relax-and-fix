@@ -47,7 +47,7 @@ def create_binary_target(data: pd.DataFrame, tolerance: float = 0.01, time_limit
     return data
 
 
-def create_multiclass_target(data: pd.DataFrame, tolerance: float = 0.01, time_limit: float = 0.99 * 1800) -> pd.DataFrame:
+def create_multi_class_target(data: pd.DataFrame, tolerance: float = 0.01, time_limit: float = 0.99 * 1800) -> pd.DataFrame:
     """Define a single target for each entry in dataset based on the lowest objective and quickest time within a tolerance level."""
     objective_columns = [col for col in data.columns if col.startswith('Obj_')]
     time_columns = [col for col in data.columns if col.startswith('Time_')]
@@ -71,10 +71,10 @@ def create_multiclass_target(data: pd.DataFrame, tolerance: float = 0.01, time_l
             # Get the method with the minimum time
             fastest_method = valid_times.idxmin()
             data.at[index, 'TARGET'] = fastest_method.replace('Time_', '')
-            data.at[index, 'TARGET_TIME'] = row[fastest_method]
+            #data.at[index, 'TARGET_TIME'] = row[fastest_method]
         else:  # If there are no faster method, keep the one with the minimum objective value as target
             data.at[index, 'TARGET'] = best_method.replace('Obj_', '')
-            data.at[index, 'TARGET_TIME'] = row['Time_' + best_method.replace('Obj_', '')]
+            #data.at[index, 'TARGET_TIME'] = row['Time_' + best_method.replace('Obj_', '')]
     # Remove results columns
     data = data.drop(columns=objective_columns + time_columns)
     return data
@@ -109,21 +109,22 @@ def create_multi_label_target(data: pd.DataFrame, tolerance: float) -> pd.DataFr
     return data
 
 
-def train_test_split_multilabel(data: pd.DataFrame, test_size: float = 0.2, random_state: int = 42, label_prefix: str = 'RF_'):
+def train_test_split_multi_label(data: pd.DataFrame, test_size: float = 0.2, random_state: int = 42, label_prefix: str = 'RF_'):
     """Automatically splits the data into training and testing sets for multi-label classification."""
     label_columns = [col for col in data.columns if col.startswith(label_prefix)]
     feature_columns = [col for col in data.columns if col not in label_columns]
     # Separate features and labels
     X = data[feature_columns]
-    X = X.drop(columns='instance')
+    X = multi_label_feature_selection(X)
     Y = data[label_columns]
     # Perform train-test split
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
     return X_train, X_test, y_train, y_test
 
 
-def feature_selection(X: pd.DataFrame) -> pd.DataFrame:
+def binary_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
     """Apply feature selection steps over features dataframe"""
+    X = X.drop(columns='instance')
     # Check for constant columns
     constant_columns = X.columns[X.nunique() == 1]
     X = X.drop(columns=constant_columns)
@@ -153,6 +154,56 @@ def feature_selection(X: pd.DataFrame) -> pd.DataFrame:
                             'p50_demand', 'avg_demand', 'iqr_demand', 'cv_demand', 
                             'kurt_production_cost', 'cv_setup_cost', 'p75_transportation_cost', 'p75_demand', 
                             'cv_setup_time'] # 'num_products' 
+    X = X.drop(columns=unimportant_features)
+    return X
+
+
+def multi_class_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
+    """Apply feature selection steps over features dataframe"""
+    X = X.drop(columns='instance')
+    # Check for constant columns
+    constant_columns = X.columns[X.nunique() == 1]
+    X = X.drop(columns=constant_columns)
+    # High correlated features (> 0.9)
+    high_corr_features = ['p50_capacity', 'p75_capacity', 'p25_capacity', 'max_capacity',
+                        'skew_inventory_cost', 'skew_production_cost', 'p75_setup_cost',
+                        'max_setup_cost', 'p50_setup_cost', 'std_setup_cost', 'p25_setup_cost',
+                        'iqr_setup_cost', 'p75_setup_time', 'p50_setup_time', 'max_setup_time',
+                        'std_setup_time', 'p25_setup_time', 'iqr_setup_time', 'cv_transportation_cost',
+                        'skew_transportation_cost', 'p25_transportation_cost', 'p50_transportation_cost',
+                        'max_transportation_cost', 'p50_utilization', 'total_production_cost', 'total_inventory_cost',
+                        'total_demand', 'total_production_time', 'total_capacity', 'total_setup_time', 'p25_demand',
+                        'iqr_utilization', 'total_utilization', 'min_capacity', 'min_setup_time', 'total_transportation_cost',
+                        'kurt_transportation_cost', 'avg_capacity', 'cv_utilization', 'iqr_capacity', 'kurt_inventory_cost',
+                        'skew_demand', 'cv_production_cost']
+    X = X.drop(columns=high_corr_features)
+    # Unimportant features for multi class classification
+    unimportant_features = []
+    X = X.drop(columns=unimportant_features)
+    return X
+
+
+def multi_label_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
+    """Apply feature selection steps over features dataframe"""
+    X = X.drop(columns='instance')
+    # Check for constant columns
+    constant_columns = X.columns[X.nunique() == 1]
+    X = X.drop(columns=constant_columns)
+    # High correlated features (> 0.9)
+    high_corr_features = ['p50_capacity', 'p75_capacity', 'p25_capacity', 'max_capacity',
+                        'skew_inventory_cost', 'skew_production_cost', 'p75_setup_cost',
+                        'max_setup_cost', 'p50_setup_cost', 'std_setup_cost', 'p25_setup_cost',
+                        'iqr_setup_cost', 'p75_setup_time', 'p50_setup_time', 'max_setup_time',
+                        'std_setup_time', 'p25_setup_time', 'iqr_setup_time', 'cv_transportation_cost',
+                        'skew_transportation_cost', 'p25_transportation_cost', 'p50_transportation_cost',
+                        'max_transportation_cost', 'p50_utilization', 'total_production_cost', 'total_inventory_cost',
+                        'total_demand', 'total_production_time', 'total_capacity', 'total_setup_time', 'p25_demand',
+                        'iqr_utilization', 'total_utilization', 'min_capacity', 'min_setup_time', 'total_transportation_cost',
+                        'kurt_transportation_cost', 'avg_capacity', 'cv_utilization', 'iqr_capacity', 'kurt_inventory_cost',
+                        'skew_demand', 'cv_production_cost']
+    X = X.drop(columns=high_corr_features)
+    # Unimportant features for multi label classification
+    unimportant_features = []
     X = X.drop(columns=unimportant_features)
     return X
 

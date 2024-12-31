@@ -1,0 +1,11 @@
+Instancia,Plantas,Produtos,Periodos,Lower Bound (LB),Upper Bound (UB),Gap,Tempo (s),Status
+NAA00_12_2_10,2,10,12,inf,inf,inf,0.0017,3
+NAA00_12_2_60,2,60,12,inf,inf,inf,0.0053,3
+NAA00_12_2_120,2,120,12,inf,inf,inf,0.0122,3
+NAA00_12_4_10,4,10,12,inf,inf,inf,0.0031,3
+NAA00_12_4_60,4,60,12,inf,inf,inf,0.0163,3
+NAA00_12_4_120,4,120,12,inf,inf,inf,0.0324,3
+NAA00_12_6_10,6,10,12,inf,inf,inf,0.0051,3
+NAA00_12_6_60,6,60,12,inf,inf,inf,0.0415,3
+NAA00_12_6_120,6,120,12,inf,inf,inf,0.233,3
+NAA00_12_15_10,15,10,12,inf,inf,inf,0.1465,3

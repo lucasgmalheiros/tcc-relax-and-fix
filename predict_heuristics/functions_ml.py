@@ -124,7 +124,8 @@ def train_test_split_multi_label(data: pd.DataFrame, test_size: float = 0.2, ran
 
 def binary_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
     """Apply feature selection steps over features dataframe"""
-    X = X.drop(columns='instance')
+    if 'instance' in X.columns:
+        X = X.drop(columns='instance')
     # Check for constant columns
     constant_columns = X.columns[X.nunique() == 1]
     X = X.drop(columns=constant_columns)
@@ -160,7 +161,8 @@ def binary_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
 
 def multi_class_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
     """Apply feature selection steps over features dataframe"""
-    X = X.drop(columns='instance')
+    if 'instance' in X.columns:
+        X = X.drop(columns='instance')
     # Check for constant columns
     constant_columns = X.columns[X.nunique() == 1]
     X = X.drop(columns=constant_columns)
@@ -185,7 +187,8 @@ def multi_class_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
 
 def multi_label_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
     """Apply feature selection steps over features dataframe"""
-    X = X.drop(columns='instance')
+    if 'instance' in X.columns:
+        X = X.drop(columns='instance')
     # Check for constant columns
     constant_columns = X.columns[X.nunique() == 1]
     X = X.drop(columns=constant_columns)

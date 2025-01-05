@@ -126,9 +126,6 @@ def binary_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
     """Apply feature selection steps over features dataframe"""
     if 'instance' in X.columns:
         X = X.drop(columns='instance')
-    # Check for constant columns
-    constant_columns = X.columns[X.nunique() == 1]
-    X = X.drop(columns=constant_columns)
     # High correlated features (> 0.9)
     high_corr_features = ['p50_capacity', 'p75_capacity', 'p25_capacity', 'max_capacity',
                         'skew_inventory_cost', 'skew_production_cost', 'p75_setup_cost',
@@ -156,6 +153,9 @@ def binary_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
                             'kurt_production_cost', 'cv_setup_cost', 'p75_transportation_cost', 'p75_demand', 
                             'cv_setup_time'] # 'num_products' 
     X = X.drop(columns=unimportant_features)
+    # Check for constant columns
+    constant_columns = X.columns[X.nunique() == 1]
+    X = X.drop(columns=constant_columns)
     return X
 
 
@@ -163,9 +163,6 @@ def multi_class_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
     """Apply feature selection steps over features dataframe"""
     if 'instance' in X.columns:
         X = X.drop(columns='instance')
-    # Check for constant columns
-    constant_columns = X.columns[X.nunique() == 1]
-    X = X.drop(columns=constant_columns)
     # High correlated features (> 0.9)
     high_corr_features = ['p50_capacity', 'p75_capacity', 'p25_capacity', 'max_capacity',
                         'skew_inventory_cost', 'skew_production_cost', 'p75_setup_cost',
@@ -182,6 +179,9 @@ def multi_class_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
     # Unimportant features for multi class classification
     unimportant_features = []
     X = X.drop(columns=unimportant_features)
+    # Check for constant columns
+    constant_columns = X.columns[X.nunique() == 1]
+    X = X.drop(columns=constant_columns)
     return X
 
 
@@ -189,9 +189,6 @@ def multi_label_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
     """Apply feature selection steps over features dataframe"""
     if 'instance' in X.columns:
         X = X.drop(columns='instance')
-    # Check for constant columns
-    constant_columns = X.columns[X.nunique() == 1]
-    X = X.drop(columns=constant_columns)
     # High correlated features (> 0.9)
     high_corr_features = ['p50_capacity', 'p75_capacity', 'p25_capacity', 'max_capacity',
                         'skew_inventory_cost', 'skew_production_cost', 'p75_setup_cost',
@@ -208,6 +205,9 @@ def multi_label_feature_selection(X: pd.DataFrame) -> pd.DataFrame:
     # Unimportant features for multi label classification
     unimportant_features = []
     X = X.drop(columns=unimportant_features)
+    # Check for constant columns
+    constant_columns = X.columns[X.nunique() == 1]
+    X = X.drop(columns=constant_columns)
     return X
 
 

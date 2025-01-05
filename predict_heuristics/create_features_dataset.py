@@ -272,9 +272,8 @@ def create_dataset(instances_folder):
 
 
 if __name__ == '__main__':
-    # Example usage
-    instances_folder = '../instancias/multi_plant_instances/'
+    instances_folder = '../instancias/validar_modelo/'
     df = create_dataset(instances_folder)
 
     # Save the dataset to a CSV file
-    df.to_csv('datasets/multi_plant_instance_features.csv', index=False)
+    df.to_csv('datasets/test_instances_features.csv', index=False)
